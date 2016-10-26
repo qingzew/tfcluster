@@ -1,0 +1,7 @@
+kazoo>=2.2.1
+argparse>=1.2.1
+snakebite>=2.11.0
+mesos
+pyyaml
+snakebite
+protobuf

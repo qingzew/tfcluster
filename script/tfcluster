@@ -1,0 +1,111 @@
+#!/usr/bin/python
+# coding: utf-8
+
+import sys
+import socket
+import argparse
+import logging
+import getpass
+import signal
+import time
+import yaml
+
+from mesos.interface import mesos_pb2
+from mesos.scheduler import MesosSchedulerDriver
+from tfcluster.scheduler import TFClusterScheduler
+from tfcluster.utils import setup_logger
+
+logger = logging.getLogger('tfcluster.tfcluster')
+setup_logger(logger)
+
+def main(argv):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-yf', '--yaml_file', type = str, required = True)
+
+    args = parser.parse_args()
+
+    try:
+        f = open(args.yaml_file)
+        config = yaml.load(f)
+        assert 'ps' in config, 'not define ps in yaml config file'
+        assert 'worker' in config, 'not define worker in yaml config file'
+        assert 'model_on_hdfs' in config, 'not define cmd in yaml config file'
+        assert 'cmd' in config, 'not define cmd in yaml config file'
+    except Exception as e:
+        print e
+        sys.exit(0)
+
+    jobs_def = []
+
+    if config.get('backend', 'tensorflow') == 'tensorflow':
+        ps = config['ps']
+        worker = config['worker']
+
+        for i in xrange(ps.get('num_ps', 1)):
+            jobs_def.append(
+                dict(
+                    name = 'ps',
+                    cpus = int(ps.get('cpus_per_ps', 1)),
+                    gpus = int(ps.get('gpus_per_ps', 0)),
+                    mems = int(ps.get('mems_per_ps', 1024)),
+                    hdfs_namenode = config.get('hdfs_namenode', '127.0.0.1:50070'),
+                    model_on_hdfs = config['model_on_hdfs'],
+                    zk_master = config.get('zk_master', '127.0.0.1:2181'),
+                    cmd = config['cmd']
+                )
+            )
+
+        for i in xrange(worker.get('num_worker', 1)):
+            jobs_def.append(
+                dict(
+                    name = 'worker',
+                    cpus = int(worker.get('cpus_per_worker', 1)),
+                    gpus = int(worker.get('gpus_per_worker', 0)),
+                    mems = int(worker.get('mems_per_worker', 1024)),
+                    hdfs_namenode = config.get('hdfs_namenode', '127.0.0.1:50070'),
+                    model_on_hdfs = config['model_on_hdfs'],
+                    zk_master = config.get('zk_master', '127.0.0.1:2181'),
+                    cmd = config['cmd']
+                )
+            )
+
+        jobs_def.append(dict(backend = config.get('backend', 'tensorflow')))
+    elif config['backend'] == 'caffe':
+        pass
+    else:
+        logger.error('unknow backend: {0}'.format(config['backend']))
+        sys.exit(0)
+
+
+    print 'jobs_def:', jobs_def
+
+    s = TFClusterScheduler(jobs_def, zk_master = config.get('zk_master', '127.0.0.1:2181'),
+                           quiet = False)
+
+    framework = mesos_pb2.FrameworkInfo()
+    framework.user = getpass.getuser()
+    framework.name = 'tfcluster'
+    framework.hostname = socket.gethostname()
+
+    capability = mesos_pb2.FrameworkInfo.Capability()
+    capability.type = mesos_pb2.FrameworkInfo.Capability.GPU_RESOURCES
+    framework.capabilities.extend([capability])
+
+    driver = MesosSchedulerDriver(s, framework, config.get('mesos_master', '127.0.0.1:5050'))
+    # driver.run()
+    driver.start()
+    # driver.stop()
+    # driver.join()
+
+    def shutdown(signal, frame):
+        driver.stop()
+        time.sleep(3)
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, shutdown)
+
+    while 1:
+        time.sleep(3)
+
+if  __name__ == '__main__':
+    sys.exit(main(sys.argv))

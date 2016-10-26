@@ -1,0 +1,16 @@
+backend: tensorflow
+mesos_master: 192.168.184.35:5050
+zk_master: 192.168.184.35:2181
+hdfs_namenode: 192.168.184.39:8020
+ps:
+    num_ps: 1
+    cpus_per_ps: 1
+    gpus_per_ps: 0
+    mems_per_ps: 10240
+worker:
+    num_worker: 2
+    cpus_per_worker: 1
+    gpus_per_worker: 1
+    mems_per_worker: 10240
+model_on_hdfs: /cifar10
+cmd: CLASSPATH=$($HADOOP_HDFS_HOME/bin/hdfs classpath --glob) python /cifar10/start.py
