@@ -14,3 +14,4 @@ worker:
     mems_per_worker: 10240
 model_on_hdfs: /cifar10
 cmd: CLASSPATH=$($HADOOP_HDFS_HOME/bin/hdfs classpath --glob) python /cifar10/start.py
+image: qingzew/centos

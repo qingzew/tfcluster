@@ -46,7 +46,8 @@ class Job(object):
                         cpus = task['cpus'],
                         gpus = task['gpus'],
                         mem = task['mems'],
-                        cmd = task['cmd'])
+                        cmd = task['cmd'],
+                        image = task['image'])
 
                     ps_cnt += 1
                 elif task['name'] == 'worker':
@@ -61,7 +62,8 @@ class Job(object):
                         cpus = task['cpus'],
                         gpus = task['gpus'],
                         mem = task['mems'],
-                        cmd = task['cmd'])
+                        cmd = task['cmd'],
+                        image = task['image'])
 
                     worker_cnt += 1
                 self.__tasks[mesos_task_id] = task

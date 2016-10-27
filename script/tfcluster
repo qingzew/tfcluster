@@ -31,6 +31,8 @@ def main(argv):
         assert 'worker' in config, 'not define worker in yaml config file'
         assert 'model_on_hdfs' in config, 'not define cmd in yaml config file'
         assert 'cmd' in config, 'not define cmd in yaml config file'
+        assert 'image' in config, 'not define image in yaml config file'
+
     except Exception as e:
         print e
         sys.exit(0)
@@ -51,7 +53,8 @@ def main(argv):
                     hdfs_namenode = config.get('hdfs_namenode', '127.0.0.1:50070'),
                     model_on_hdfs = config['model_on_hdfs'],
                     zk_master = config.get('zk_master', '127.0.0.1:2181'),
-                    cmd = config['cmd']
+                    cmd = config['cmd'],
+                    image = config['image']
                 )
             )
 
@@ -65,7 +68,8 @@ def main(argv):
                     hdfs_namenode = config.get('hdfs_namenode', '127.0.0.1:50070'),
                     model_on_hdfs = config['model_on_hdfs'],
                     zk_master = config.get('zk_master', '127.0.0.1:2181'),
-                    cmd = config['cmd']
+                    cmd = config['cmd'],
+                    image = config['image']
                 )
             )
 

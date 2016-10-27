@@ -16,7 +16,7 @@ from mesos.interface import mesos_pb2
 
 class TensorflowTask(object):
     def __init__(self, mesos_task_id, uid, job_name, task_index, zk_master,
-                 hdfs_namenode, model_on_hdfs,
+                 hdfs_namenode, model_on_hdfs, image,
                  cpus = 1.0, mem = 1024.0, gpus = 0, cmd = None):
         self.mesos_task_id = mesos_task_id
         self.job_name = job_name
@@ -33,6 +33,8 @@ class TensorflowTask(object):
         self.zk_master = zk_master
         self.hdfs_namenode = hdfs_namenode
         self.model_on_hdfs = model_on_hdfs
+
+        self.image = image
 
     def __str__(self):
         return textwrap.dedent('''
@@ -123,7 +125,7 @@ class TensorflowTask(object):
             image.type = mesos_pb2.Image.DOCKER
 
             dc = image.docker
-            dc.name = 'qingzew/centos'
+            dc.name = self.image
 
             # mount docker image as a rootfs's dir
             # image_dir = ci.volumes.add()
@@ -136,10 +138,10 @@ class TensorflowTask(object):
             # image_dir.container_path = '/tmp'
 
             # mount volume
-            data_dir = ci.volumes.add()
-            data_dir.mode = mesos_pb2.Volume.RO
-            data_dir.host_path = '/tmp/cifar10/cifar10_data/'
-            data_dir.container_path = '/tmp/data'
+            # data_dir = ci.volumes.add()
+            # data_dir.mode = mesos_pb2.Volume.RO
+            # data_dir.host_path = '/tmp/cifar10/cifar10_data/'
+            # data_dir.container_path = '/tmp/data'
 
         return ti
 
